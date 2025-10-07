@@ -49,9 +49,9 @@ jobs:
 
       - name: Run Bandit (debug)
         run: |
-          bandit -r . -f json -o bandit.json || true    
+          bandit -r . -f json -o bandit.json     
 
-      - name: Run Bandit (sarif)S
+      - name: Run Bandit
         run: |
           bandit -r . -f json -o bandit.json || true 
       - name: Convert Bandit JSON to SARIF
