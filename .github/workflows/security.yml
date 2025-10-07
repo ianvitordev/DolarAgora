@@ -72,6 +72,6 @@ jobs:
         continue-on-error: true
 
       - name: Stop Django development server
-        run: |
+        run: pkill -f "python manage.py runserver" || true
           # É crucial garantir que o servidor seja parado
-          pkill -f "python manage.py runserver"
+          
