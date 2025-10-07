@@ -3,13 +3,20 @@ name: Security Scan
 on:
   push:
     branches:
-      - '*'
+      - main  # substitua pelo nome da sua default branch
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -31,14 +38,29 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          limit-severities-for-sarif: false
+
+      - name: Upload Trivy SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          
 
       - name: Run Bandit
         run: |
-          bandit -r . || true 
-      - name: Start Django development server
+          bandit -r . -f json -o bandit.json || true 
+      - name: Convert Bandit JSON to SARIF
         run: |
-          python manage.py migrate 
-          python manage.py runserver &
+         python scripts/bandit_to_sarif.py 
+
+      - name: Upload Bandit SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-results.sarif
+
+
         env:
           SECRET_KEY: ${{ secrets.DJANGO_PROD_SECRET_KEY }}
 
@@ -55,6 +77,6 @@ jobs:
         continue-on-error: true
 
       - name: Stop Django development server
-        run: |
+        run: pkill -f "python manage.py runserver" || true
           # É crucial garantir que o servidor seja parado
-          pkill -f "python manage.py runserver"
+          
