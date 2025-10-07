@@ -3,7 +3,11 @@ name: Security Scan
 on:
   push:
     branches:
-      - '*'
+      - main  # substitua pelo nome da sua branch default
+  pull_request:
+    branches:
+      - main
+
 permissions:
   contents: read
   security-events: write
@@ -46,23 +50,21 @@ jobs:
       - name: Run Bandit
         run: |
           bandit -r . -f json -o bandit.json || true 
+
       - name: Convert Bandit JSON to SARIF
-        run: |
-         python scripts/bandit_to_sarif.py 
+        run: python scripts/bandit_to_sarif.py 
 
       - name: Upload Bandit SARIF results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: bandit-results.sarif
 
-
         env:
           SECRET_KEY: ${{ secrets.DJANGO_PROD_SECRET_KEY }}
 
+      - name: Start Django server
+        run: nohup python manage.py runserver 0.0.0.0:8000 &
 
-      - uses: actions/checkout@v3
-
-      # O scan do ZAP agora pode se conectar ao servidor iniciado
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.7.0
         with:
@@ -74,4 +76,3 @@ jobs:
       - name: Stop Django development server
         run: pkill -f "python manage.py runserver" || true
           # É crucial garantir que o servidor seja parado
-          
