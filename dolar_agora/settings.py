@@ -24,7 +24,6 @@ import os
 try:
     SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 except KeyError as e:
-    
     raise RuntimeError ("Could not find DJANGO_SECRET_KEY environment") from e
     
 
